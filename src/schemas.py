@@ -6,9 +6,15 @@ class CreateUser(BaseModel):
     password: str
 
 class ResponseUser(BaseModel):
-    id: int
     email: str
     name: str
-    password: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class ResponseToken(BaseModel):
+    access_token: str
+    token_type: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str

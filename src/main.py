@@ -3,7 +3,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .database import Base, engine, SessionLocal
 from .models import User
-from .schemas import CreateUser, ResponseUser
+from .schemas import CreateUser, ResponseToken, ResponseUser, LoginRequest
+from .security.auth import hash_password, verify_password, create_access_token
 
 app = FastAPI()
 
@@ -20,7 +21,8 @@ def get_db():
 
 @app.post("/users", response_model=ResponseUser)
 def create_user(user: CreateUser, db: Session = Depends(get_db)):
-    new_user = User(name=user.name, email=str(user.email), password=user.password)
+    hash_pass = hash_password(user.password)
+    new_user = User(name=user.name, email=str(user.email), password=hash_pass)
     db.add(new_user)
     try:
         db.commit()
@@ -35,3 +37,17 @@ def create_user(user: CreateUser, db: Session = Depends(get_db)):
 def get_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return users
+
+
+@app.post("/login", response_model=ResponseToken)
+def create_token(request: LoginRequest, db: Session = Depends(get_db)):
+    print(request.email)
+    user = db.query(User).filter(User.email == str(request.email)).first()
+    print(user)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not verify_password(request.password, user.password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+
+    token = create_access_token({"sub": user.email})
+    return {"access_token": token, "token_type": "bearer"}
