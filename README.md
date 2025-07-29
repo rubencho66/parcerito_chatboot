@@ -10,8 +10,8 @@ A. Bash execution
 ## Security
     A.4. pip install python-jose[cryptography] passlib[bcrypt]
 
-B. Run project
-    B.1. src.main:app --reload
+B. Run project \
+    B.1. -> src.main:app --reload
 
 
 # Note
