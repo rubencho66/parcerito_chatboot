@@ -1,19 +1,18 @@
 from . import env
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from .chat_model import ChatModel
 from .database import Base, engine, SessionLocal
 from .models import User
 from .schemas import ErrorResponse, SecurityContext, CreateUser, ResponseToken, ResponseUser, LoginRequest, ChatRequest, ChatResponse
 from .security.auth import hash_password, verify_password, create_access_token, get_security_context
-from .chat_model import instanciate_chat_model, ask_to_model
-from .constants import NOT_AUTHENTICATED_MESSAGE
+from .constants import NOT_AUTHENTICATED_MESSAGE, MODEL_NOT_DEFINED
 
 app = FastAPI()
-model = instanciate_chat_model()
+model = ChatModel()
 
 #database
 Base.metadata.create_all(bind=engine)
@@ -72,8 +71,7 @@ def create_token(request: LoginRequest, db: Session = Depends(get_db)):
 
 @app.post("/chat", response_model=ChatResponse, response_model_exclude_none=True)
 def chat(request: ChatRequest, security_context: SecurityContext = Depends(get_security_context), db: Session = Depends(get_db)):
-    if request.message is None or request.message.strip() == "":
-        raise HTTPException(status_code=400, detail="El mensaje no puede estar vacío.")
-    
-    chat_response = ask_to_model(model, request.message, request.conversation_id)
-    return ChatResponse(reply=chat_response, statusCode=200, conversation_id=request.conversation_id)
+    chat_response = model.ask_to_model(request.message, request.conversation_id)
+    if not chat_response:
+        raise HTTPException(status_code=500, detail=MODEL_NOT_DEFINED)
+    return ChatResponse(reply=chat_response.content, statusCode=200, conversation_id=request.conversation_id)

@@ -5,6 +5,7 @@ sqlalchemy
 pydantic 
 pydantic[email] 
 python-dotenv
+sentence_transformers
 python-jose[cryptography] 
 passlib[bcrypt]
 langgraph 
