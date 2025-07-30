@@ -54,16 +54,17 @@ def get_users(db: Session = Depends(get_db)):
 
 @app.post("/login", response_model=ResponseToken)
 def create_token(request: LoginRequest, db: Session = Depends(get_db)):
-    print(request.email)
     user = db.query(User).filter(User.email == str(request.email)).first()
-    print(user)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not verify_password(request.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
     token = create_access_token({"id": user.id, "sub": user.email})
-    return {"access_token": token, "token_type": "bearer"}
+    return {"access_token": token,
+            "token_type": "bearer",
+            "status_code": 200,
+            "message": "¡Bienvenido de nuevo, parcero! Ya podés comenzar a chatear."}
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, security_context: SecurityContext = Depends(get_security_context), db: Session = Depends(get_db)):
