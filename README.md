@@ -1,20 +1,59 @@
-Steps to run 'Parcerito Chat Boot' 
+# Steps to Run 'Parcerito Chat Boot'
 
-# The first three steps are required before to run
+## 1. Setup (Required Before Running)
 
-A. Bash execution
-    A.1. python -m venv venv  # this step generate virtual env \
-    A.2. venv\Scripts\activate # activate env for windows \
-    A.3. pip install fastapi uvicorn psycopg2-binary sqlalchemy pydantic pydantic[email] python-dotenv
-## Security
-    A.4. pip install python-jose[cryptography] passlib[bcrypt]
-## Langchain and AI
-    A.5. pip install langgraph langchain[openai] langchain-community openai
+### A. Bash Execution
 
-B. Run project \
-    B.1. -> Define env variables in a .env file -> Define this ones: OPENAI_API_KEY, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, CONNECTION
-    B.2. -> src.main:app --reload or uvicorn src.main:app --reload
+1. **Create virtual environment:**
+   ```
+   python -m venv venv
+   ```
+2. **Activate environment (Windows):**
+   ```
+   venv\Scripts\activate
+   ```
+3. **Install core dependencies:**
+   ```
+   pip install fastapi uvicorn psycopg2-binary sqlalchemy pydantic pydantic[email] python-dotenv
+   ```
 
+#### Security Dependencies
 
-# Note
-It is crucial to have a postgres database with the name: PerficientTest, with user: postgres and password: admin.
+4. **Install security packages:**
+   ```
+   pip install python-jose[cryptography] passlib[bcrypt]
+   ```
+
+#### Langchain and AI
+
+5. **Install AI-related packages:**
+   ```
+   pip install langgraph langchain[openai] langchain-community openai
+   ```
+
+---
+
+## 2. Run the Project
+
+1. **Define environment variables in a `.env` file:**
+
+   - `OPENAI_API_KEY`
+   - `SECRET_KEY`
+   - `ALGORITHM`
+   - `ACCESS_TOKEN_EXPIRE_MINUTES`
+   - `CONNECTION`
+
+2. **Start the application:**
+   ```
+   uvicorn src.main:app --reload
+   ```
+   _(or use `src.main:app --reload` if supported)_
+
+---
+
+## Note
+
+It is crucial to have a PostgreSQL database named **PerficientTest** with:
+
+- **User:** postgres
+- **Password:** admin
