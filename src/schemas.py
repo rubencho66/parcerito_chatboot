@@ -14,6 +14,8 @@ class ResponseUser(BaseModel):
 class ResponseToken(BaseModel):
     access_token: str
     token_type: str
+    status_code: int
+    message: str
 
 class LoginRequest(BaseModel):
     email: EmailStr
