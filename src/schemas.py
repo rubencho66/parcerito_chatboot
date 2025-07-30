@@ -1,5 +1,15 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 
+class ErrorResponse(BaseModel):
+    detail: str
+    statusCode: int
+
+class SecurityContext(BaseModel):
+    id: int
+    email: EmailStr
+
+    model_config = ConfigDict(from_attributes=True)
+
 class CreateUser(BaseModel):
     email: EmailStr
     name: str
@@ -20,3 +30,14 @@ class ResponseToken(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+class ChatRequest(BaseModel):
+    message: str
+    conversation_id: str
+
+class ChatResponse(BaseModel):
+    reply: str
+    statusCode: int
+    conversation_id: str
+
+    model_config = ConfigDict(from_attributes=True)
