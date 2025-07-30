@@ -33,7 +33,7 @@
 
 6. **Install torch for local models with GPU**
    ```
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+   pip install sentence_transformers torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
    ```
 
 ---
