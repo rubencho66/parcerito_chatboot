@@ -9,7 +9,7 @@ A. Bash execution
 ## Security
     A.4. pip install python-jose[cryptography] passlib[bcrypt]
 ## Langchain and AI
-    A.5. pip install langgraph langchain[openai] langchain-community
+    A.5. pip install langgraph langchain[openai] langchain-community openai
 
 B. Run project \
     B.1. -> Define env variables in a .env file -> Define this ones: OPENAI_API_KEY, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, CONNECTION

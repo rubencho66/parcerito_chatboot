@@ -1,0 +1,4 @@
+NOT_AUTHENTICATED_MESSAGE = "No estás autenticado. Inicia sesión para chatear."
+MODEL_NOT_DEFINED = "Parcerito-bot no se está sintiendo muy bien. Por favor, comunicate con el administrador."
+MODEL_FAILURE_MESSAGE = "Uy parcero... algo falló al generar tu respuesta. Intentálo de nuevo en un momentico."
+RATE_LIMIT_MESSAGE = "¡Uy parcero! Parece que estás enviando mensajes muy rápido. Esperá un momentico y volvé a intentarlo."
