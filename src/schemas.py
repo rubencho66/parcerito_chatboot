@@ -41,3 +41,6 @@ class ChatResponse(BaseModel):
     conversation_id: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class LLMResponse(BaseModel):
+    content: str

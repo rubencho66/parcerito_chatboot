@@ -31,6 +31,11 @@
    pip install langgraph langchain[openai] langchain-community openai
    ```
 
+6. **Install torch for local models with GPU**
+   ```
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+   ```
+
 ---
 
 ## 2. Run the Project
@@ -42,6 +47,10 @@
    - `ALGORITHM`
    - `ACCESS_TOKEN_EXPIRE_MINUTES`
    - `CONNECTION`
+   - `USE_LOCAL_MODEL`
+   - `LOCAL_MODEL_NAME`
+   - `LOCAL_LLM_BASE_URL`
+   - `LOCAL_LLM_API_KEY`
 
 2. **Start the application:**
    ```
