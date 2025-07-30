@@ -33,11 +33,11 @@ class LoginRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    conversation_id: str
+    conversation_id: str | None = None
 
 class ChatResponse(BaseModel):
     reply: str
     statusCode: int
-    conversation_id: str
+    conversation_id: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

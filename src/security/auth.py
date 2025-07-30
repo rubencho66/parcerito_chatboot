@@ -5,6 +5,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from ..schemas import SecurityContext
 from ..env import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..constants import NOT_AUTHENTICATED_MESSAGE
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -26,7 +27,7 @@ def create_access_token(data:dict, expires_delta:timedelta = None):
 def get_security_context(token: str = Depends(oauth2_scheme)) -> str:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="No autorizado",
+        detail= NOT_AUTHENTICATED_MESSAGE,
         headers={"WWW-Authenticate": "Bearer"},
     )
 
