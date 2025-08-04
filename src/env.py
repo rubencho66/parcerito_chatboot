@@ -1,5 +1,8 @@
-from dotenv import load_dotenv
+"""Environment variable loading and configuration for the application.
+This module loads environment variables from a .env file and provides configuration constants."""
 import os
+
+from dotenv import load_dotenv
 
 load_dotenv()
 

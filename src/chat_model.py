@@ -1,56 +1,101 @@
+"""Chat Model Module"""
+
 import os
+import logging
+
+import requests
+from langchain.chat_models import init_chat_model
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.tools.retriever import create_retriever_tool
 from langchain_community.document_loaders import TextLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_openai import OpenAIEmbeddings
-from langchain.tools.retriever import create_retriever_tool
-from langchain.chat_models import init_chat_model
-from starlette.exceptions import HTTPException
 from openai import RateLimitError
-from .env import USE_LOCAL_MODEL, LOCAL_MODEL_NAME, LOCAL_LLM_BASE_URL, LOCAL_LLM_API_KEY
-from .constants import MODEL_FAILURE_MESSAGE, RATE_LIMIT_MESSAGE, MODEL_NOT_DEFINED, DEFAULT_SYSTEM_PROMPT
-from .schemas import LLMResponse
-import requests
+from starlette.exceptions import HTTPException
+
+from src.constants import (
+    DEFAULT_SYSTEM_PROMPT,
+    KNOWLEDGE_BASE_PATH,
+    MODEL_FAILURE_MESSAGE,
+    MODEL_NOT_DEFINED,
+    PROMPT_PATH,
+    RATE_LIMIT_MESSAGE,
+)
+from src.env import (
+    LOCAL_LLM_API_KEY,
+    LOCAL_LLM_BASE_URL,
+    LOCAL_MODEL_NAME,
+    USE_LOCAL_MODEL,
+)
+from src.schemas import LLMResponse
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 
 class ChatModel:
-    retriever_tool = None
-    system_prompt = None
+    """Class to handle chat model interactions, including loading knowledge base,
+    creating retriever tools, and generating responses based on user queries."""
+
+    def __init__(
+        self,
+        use_local_model=USE_LOCAL_MODEL,
+        local_model_name=LOCAL_MODEL_NAME,
+        local_llm_base_url=LOCAL_LLM_BASE_URL,
+        local_llm_api_key=LOCAL_LLM_API_KEY,
+        prompt_path=PROMPT_PATH,
+        knowledge_base_path=KNOWLEDGE_BASE_PATH,
+        response_model=None,
+        retriever_tool=None,
+        logger_instance=None,
+    ):
+        self.use_local_model = use_local_model
+        self.local_model_name = local_model_name
+        self.local_llm_base_url = local_llm_base_url
+        self.local_llm_api_key = local_llm_api_key
+        self.prompt_path = prompt_path
+        self.knowledge_base_path = knowledge_base_path
+        self.logger = logger_instance or logging.getLogger(__name__)
+        self.response_model = response_model
+        self.retriever_tool = retriever_tool
+        self.system_prompt = self._load_system_prompt()
+
+        if self.response_model is None:
+            self.response_model = self._init_response_model()
+        if self.retriever_tool is None:
+            self.retriever_tool = self._init_retriever_tool()
 
     def _load_system_prompt(self) -> str:
         """
         Loads and processes the system prompt from the prompt.md file.
-        
+
         Returns:
             str: The cleaned system prompt ready to be used with the model.
         """
         try:
-            prompt_path = os.path.join(os.path.dirname(__file__), "prompts", "prompt.md")
-            with open(prompt_path, 'r', encoding='utf-8') as file:
+            self.logger.info("Loading system prompt from file.")
+            with open(self.prompt_path, "r", encoding="utf-8") as file:
                 return file.read()
         except FileNotFoundError:
+            self.logger.warning("Prompt file not found. Using default system prompt.")
             return DEFAULT_SYSTEM_PROMPT
         except Exception as e:
+            self.logger.error("Error loading system prompt: %s", e)
             return DEFAULT_SYSTEM_PROMPT
 
-    def _get_knowledge_base_files(self, knowledge_base_path: str) -> list[str]:
+    def _get_knowledge_base_files(self) -> list[str]:
         """
-        Retrieves a list of file paths for all Markdown (.md) files in the specified knowledge base directory.
-
-        Args:
-            knowledge_base_path (str): The path to the directory containing the knowledge base files.
+        Retrieves a list of file paths for all Markdown (.md) files in the knowledge
+        base directory defined by KNOWLEDGE_BASE_PATH.
 
         Returns:
             list[str]: A list of file paths for all Markdown files in the specified directory.
         """
         markdown_paths = []
-        # Build absolute path to knowledge base
-        abs_kb_path = os.path.join(os.path.dirname(__file__), knowledge_base_path)
-        
-        for filename in os.listdir(abs_kb_path):
+        for filename in os.listdir(self.knowledge_base_path):
             if filename.endswith(".md"):
-                markdown_paths.append(os.path.join(abs_kb_path, filename))
+                markdown_paths.append(os.path.join(self.knowledge_base_path, filename))
         return markdown_paths
 
     def _get_documents(self, markdown_path: list[str]) -> list[TextLoader]:
@@ -75,7 +120,8 @@ class ChatModel:
         Splits a list of documents into smaller chunks using a RecursiveCharacterTextSplitter.
 
         Args:
-            document_list (list): A list of documents to be split. Each document should be a string or an object compatible with the text splitter.
+            document_list (list): A list of documents to be split. Each document should be a string
+            or an object compatible with the text splitter.
 
         Returns:
             list: A list of smaller document chunks obtained by splitting the input documents.
@@ -99,11 +145,11 @@ class ChatModel:
         Returns:
             InMemoryVectorStore: An in-memory vector store containing the embedded documents.
         """
-        if USE_LOCAL_MODEL:
+        if self.use_local_model:
             embedding = HuggingFaceEmbeddings(
                 model_name="paraphrase-multilingual-MiniLM-L12-v2",  # Bueno para español
-                model_kwargs={'device': 'cuda'},  # Cambiar a 'cuda' si tienes GPU
-                encode_kwargs={'normalize_embeddings': True}
+                model_kwargs={"device": "cpu"},  # Cambiar a 'cuda' si tienes GPU
+                encode_kwargs={"normalize_embeddings": True},
             )
         else:
             embedding = OpenAIEmbeddings()
@@ -111,7 +157,6 @@ class ChatModel:
         vectorstore = InMemoryVectorStore.from_documents(
             documents=docs_splits, embedding=embedding
         )
-
         return vectorstore
 
     def _create_retriever(
@@ -131,109 +176,94 @@ class ChatModel:
         retriever = vectorstore.as_retriever()
         return create_retriever_tool(retriever, name, description)
 
-    def __init__(self):
-        "Instanciate the chat model with the appropriate parameters"
-        kb_path = "knowledge_base"
+    def _init_response_model(self):
         model_temperature = 0.3
-        
-        # Load the system prompt
-        self.system_prompt = self._load_system_prompt()
-        
-        if USE_LOCAL_MODEL:
+        if self.use_local_model:
             # Usar LM Studio local
-            self.response_model = init_chat_model(
-                f"openai:{LOCAL_MODEL_NAME}",  # Nombre del modelo en LM Studio
+            return init_chat_model(
+                f"openai:{self.local_model_name}",
                 temperature=model_temperature,
-                api_base=LOCAL_LLM_BASE_URL,
-                api_key=LOCAL_LLM_API_KEY
+                api_base=self.local_llm_base_url,
+                api_key=self.local_llm_api_key,
             )
         else:
-            # Usar OpenAI
-            self.response_model = init_chat_model(
-                "openai:gpt-4.1", temperature=model_temperature
-            )
+            return init_chat_model("openai:gpt-4.1", temperature=model_temperature)
 
+    def _init_retriever_tool(self):
         # 1. cargar el contenido
-        markdown_files = self._get_knowledge_base_files(kb_path)
+        markdown_files = self._get_knowledge_base_files()
         document_list = self._get_documents(markdown_files)
-
         # 2. separar el texto y codificar con el embedding (tiktoken_encoder)
         docs_splits = self._get_splitted_docs(document_list)
         try:
             vectorstore = self._create_memory_db(docs_splits)
-            self.retriever_tool = self._create_retriever(
+            return self._create_retriever(
                 vectorstore,
                 "retrieve_ParceroGo",
                 "Buscador de información parceroGo",
             )
         except RateLimitError as e:
-            print(f"Error al crear la base de datos vectorstore: {e}")
-        
+            self.logger.error("Error al crear la base de datos vectorstore: %s", e)
+            return None
 
     def _generate_response(self, message: str):
         # Obtener contexto relevante de la base de conocimiento
+        if not self.retriever_tool:
+            self.logger.error("Retriever tool is not initialized.")
+            raise HTTPException(status_code=500, detail=MODEL_NOT_DEFINED)
         docs = self.retriever_tool.invoke({"query": message})
-        
-        # Construir el prompt completo
         if docs:
-            context_text = "\n".join([doc.page_content if hasattr(doc, 'page_content') else str(doc) for doc in docs])
+            context_text = "\n".join(
+                [doc.page_content if hasattr(doc, "page_content") else str(doc) for doc in docs]
+            )
         else:
             context_text = "No hay información específica disponible."
-
-        # Reemplazar placeholders directamente en el prompt completo
         full_prompt = self.system_prompt.format(
-            context_section=context_text,
-            user_message=message
+            context_section=context_text, user_message=message
         )
-        
-        # Usar el modelo local
-        if USE_LOCAL_MODEL:
+        if self.use_local_model:
             return self._call_local_model(full_prompt)
         else:
             return self.response_model.invoke(full_prompt)
 
     def _call_local_model(self, prompt: str):
-        """Llamar directamente al API de LM Studio"""
-        url = f"{LOCAL_LLM_BASE_URL}/chat/completions"
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer lm-studio"
-        }
-        
+        url = f"{self.local_llm_base_url}/chat/completions"
+        headers = {"Content-Type": "application/json"}
         data = {
-            "model": LOCAL_MODEL_NAME,  # Nombre de tu modelo local
+            "model": self.local_model_name,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": prompt},
             ],
             "temperature": 0.3,
-            "max_tokens": 500,
-            "stream": False
+            "max_tokens": -1,
+            "stream": False,
         }
-        
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=600000)
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"]
         except requests.exceptions.RequestException as e:
-            raise HTTPException(status_code=500, detail=f"Error connecting to local model: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error connecting to local model: {str(e)}"
+            ) from e
 
-    def ask_to_model(self, message: str, conversation_id: str):
+    def ask_to_model(self, message: str):
+        """Ask the chat model a question and return the response."""
         if not self.retriever_tool or not self.response_model:
-            print(f"Error al iniciar componentes del modelo.")
+            self.logger.error("Error initializing chat model or retriever tool.")
             raise HTTPException(status_code=500, detail=MODEL_NOT_DEFINED)
-    
         try:
             response = self._generate_response(message)
-        except RateLimitError:
-            raise HTTPException(status_code=429, detail=RATE_LIMIT_MESSAGE)
+        except RateLimitError as exc:
+            raise HTTPException(status_code=429, detail=RATE_LIMIT_MESSAGE) from exc
         except Exception as e:
-            raise HTTPException(status_code=500, detail=MODEL_FAILURE_MESSAGE)
-    
+            self.logger.error("Error generating response from chat model: %s", e)
+            raise HTTPException(status_code=500, detail=MODEL_FAILURE_MESSAGE) from e
+
         if not response:
             raise HTTPException(status_code=500, detail=MODEL_NOT_DEFINED)
-    
+
         if isinstance(response, str):
             response = LLMResponse(content=response)
         return response
