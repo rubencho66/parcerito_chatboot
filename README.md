@@ -5,34 +5,42 @@
 ### A. Bash Execution
 
 1. **Create virtual environment:**
-   ```
+
+   ```bash
    python -m venv venv
    ```
+
 2. **Activate environment (Windows):**
-   ```
+
+   ```bash
    venv\Scripts\activate
    ```
+
 3. **Install core dependencies:**
-   ```
+
+   ```bash
    pip install fastapi uvicorn psycopg2-binary sqlalchemy pydantic pydantic[email] python-dotenv
    ```
 
-#### Security Dependencies
+### Security Dependencies
 
-4. **Install security packages:**
-   ```
+1. **Install security packages:**
+
+   ```bash
    pip install python-jose[cryptography] passlib[bcrypt]
    ```
 
-#### Langchain and AI
+### Langchain and AI
 
-5. **Install AI-related packages:**
-   ```
+1. **Install AI-related packages:**
+
+   ```bash
    pip install langgraph langchain[openai] langchain-community openai
    ```
 
-6. **Install torch for local models with GPU**
-   ```
+2. **Install torch for local models with GPU**
+
+   ```bash
    pip install sentence_transformers torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
    ```
 
@@ -53,9 +61,11 @@
    - `LOCAL_LLM_API_KEY`
 
 2. **Start the application:**
-   ```
+
+   ```bash
    uvicorn src.main:app --reload
    ```
+
    _(or use `src.main:app --reload` if supported)_
 
 ---

@@ -1,7 +1,13 @@
+"""models.py"""
+
 from sqlalchemy import Column, Integer, String
-from .database import Base
+
+from src.database import Base
+
 
 class User(Base):
+    """User model for the application, representing a user in the database."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
