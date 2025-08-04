@@ -1,0 +1,41 @@
+{
+  "consumer": {
+    "name": "ParceroGoConsumer"
+  },
+  "provider": {
+    "name": "ChatModelProvider"
+  },
+  "interactions": [
+    {
+      "description": "a chat completion request for external question",
+      "providerState": "A valid chat request",
+      "request": {
+        "method": "POST",
+        "path": "/chat",
+        "body": {
+          "message": "¿Cuánto dinero tengo en mi cuenta bancaria?",
+          "conversation_id": "abcd"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "reply": "Parce, creo que su dinero está en el lugar equivocado, eso no es conmigo.",
+          "statusCode": 200,
+          "conversation_id": "abcd"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}
