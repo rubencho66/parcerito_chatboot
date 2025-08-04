@@ -1,0 +1,43 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-lastest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Login to Azure Container
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ secrets.AZURE_USER_LOGIN}}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+
+    - name: Build Docker Img
+      uses: |
+        docker-compose build
+        docker tag parcerito_app ${{ secrets.AZURE_USER_LOGIN }}/parcerito_chatboot-app:latest
+
+    - name: Push to Azure
+      uses: |
+        docker push ${{ secrets.AZURE_USER_LOGIN }}/parcerito_chatboot-app:latest
+
+    - name: Deploy docker-compose
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.AZURE_SSH_HOST }}
+        username: ${{ secrets.AZURE_SSH_USER }}
+        key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+        script: |
+          cd /home${{ secrets.AZURE_SSH_USER }}/chatboot
+          git pull origin main
+          docker-compose pull
+          docker-compose down
+          docker-compose up -d

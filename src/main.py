@@ -75,3 +75,7 @@ def chat(request: ChatRequest, security_context: SecurityContext = Depends(get_s
     if not chat_response:
         raise HTTPException(status_code=500, detail=MODEL_NOT_DEFINED)
     return ChatResponse(reply=chat_response.content, statusCode=200, conversation_id=request.conversation_id)
+
+@app.get("/health")
+def get_health(status: str = "OK"):
+    return {"Message": f"Hi the status is {status}"}
