@@ -1,0 +1,114 @@
+{
+  "consumer": {
+    "name": "ParceroGoConsumer"
+  },
+  "provider": {
+    "name": "ChatModelProvider"
+  },
+  "interactions": [
+    {
+      "description": "a chat completion request",
+      "providerState": "A valid chat request",
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "headers": {
+          "Authorization": "Bearer sometoken",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "message": "Hello",
+          "conversation_id": "abc123"
+        },
+        "matchingRules": {
+          "$.headers.Authorization": {
+            "match": "type"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": "chatcmpl-awqt3fcxps78anf05wet7t",
+          "object": "chat.completion",
+          "created": 1754485000,
+          "model": "google/gemma-3n-e4b",
+          "choices": [
+            {
+              "index": 0,
+              "logprobs": null,
+              "finish_reason": "stop",
+              "message": {
+                "role": "assistant",
+                "content": "¡Claro que sí! Para eso estoy, parcero. ¿En qué te puedo ayudar con ParceroGo?"
+              }
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 2185,
+            "completion_tokens": 24,
+            "total_tokens": 2209
+          },
+          "stats": {
+          },
+          "system_fingerprint": "google/gemma-3n-e4b"
+        },
+        "matchingRules": {
+          "$.body.id": {
+            "match": "type"
+          },
+          "$.body.object": {
+            "match": "regex",
+            "regex": "chat.completion"
+          },
+          "$.body.created": {
+            "match": "type"
+          },
+          "$.body.model": {
+            "match": "type"
+          },
+          "$.body.choices": {
+            "match": "type"
+          },
+          "$.body.choices[0].index": {
+            "match": "type"
+          },
+          "$.body.choices[0].finish_reason": {
+            "match": "regex",
+            "regex": "stop"
+          },
+          "$.body.choices[0].message.role": {
+            "match": "regex",
+            "regex": "assistant"
+          },
+          "$.body.choices[0].message.content": {
+            "match": "type"
+          },
+          "$.body.usage.prompt_tokens": {
+            "match": "type"
+          },
+          "$.body.usage.completion_tokens": {
+            "match": "type"
+          },
+          "$.body.usage.total_tokens": {
+            "match": "type"
+          },
+          "$.body.stats": {
+            "match": "type"
+          },
+          "$.body.system_fingerprint": {
+            "match": "type"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}
