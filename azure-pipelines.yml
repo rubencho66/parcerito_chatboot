@@ -1,0 +1,53 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  ACR_NAME: parcerito
+  IMAGE_NAME: parcerito-app
+
+stages:
+- stage: Test
+  displayName: Run Pytest
+  jobs:
+  - job: RunTests
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.10'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pytest
+      displayName: 'Install dependencies and run tests'
+
+- stage: BuildAndPush
+  displayName: Build and Push Docker Image
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+  - job: BuildAndPushJob
+    steps:
+    - checkout: self
+
+    - task: DockerInstaller@0
+      displayName: 'Install Docker if needed'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'azureServiceConnection_parcerito'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $ACR_NAME
+          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:$(Build.BuildId) .
+          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:$(Build.BuildId)
+
