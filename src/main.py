@@ -1,5 +1,6 @@
 from . import env
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,14 @@ from .constants import NOT_AUTHENTICATED_MESSAGE, MODEL_NOT_DEFINED
 
 app = FastAPI()
 model = ChatModel()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Cambia "*" por una lista de dominios seguros en producción
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #database
 Base.metadata.create_all(bind=engine)

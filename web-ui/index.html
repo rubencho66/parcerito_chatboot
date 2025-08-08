@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .container {
+      max-width: 400px;
+      margin: 8% auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #2563eb;
+      margin-bottom: 2rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .register-link {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .register-link a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body style="background-color: #f3f4f6;">
+  <div class="container">
+    <h2>Iniciar Sesión</h2>
+    <form id="login-form">
+      <input type="email" placeholder="Correo" id="login-email" required />
+      <input type="password" placeholder="Contraseña" id="login-password" required />
+      <button type="submit">Ingresar</button>
+    </form>
+    <p class="register-link">¿No tienes cuenta? <a href="register.html">Regístrate</a></p>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

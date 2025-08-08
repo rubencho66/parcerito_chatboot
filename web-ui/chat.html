@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat con Parcerito-bot</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      max-width: 600px;
+      width: 100%;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 1rem;
+      background-color: #2563eb;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      background-color: #f9fafb;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      max-width: 80%;
+      padding: 0.75rem 1rem;
+      border-radius: 16px;
+      line-height: 1.4;
+    }
+
+    .user-message {
+      background-color: #2563eb;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot-message {
+      background-color: #e5e7eb;
+      color: #111827;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 1rem;
+      border-top: 1px solid #e5e7eb;
+      background-color: #fff;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      margin-right: 1rem;
+    }
+
+    .chat-input button {
+      padding: 0.75rem 1.5rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h3>Parcerito-bot</h3>
+      <button onclick="logout()" style="background: white; color: #2563eb; padding: 0.4rem 0.8rem; border: none; border-radius: 6px; cursor: pointer;">
+        Cerrar sesión
+      </button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input">
+      <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." />
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInput = document.getElementById("chat-input");
+
+    function appendMessage(message, isUser = false) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", isUser ? "user-message" : "bot-message");
+      msg.textContent = message;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      appendMessage(message, true);
+      chatInput.value = "";
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Token no encontrado. Vuelve a iniciar sesión.");
+        window.location.href = "index.html";
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:8000/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          appendMessage(data.response, false);
+        } else {
+          appendMessage("⚠️ Error: " + (data.detail || "Sin respuesta."), false);
+        }
+      } catch (err) {
+        appendMessage("⚠️ Error de red: " + err.message, false);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
